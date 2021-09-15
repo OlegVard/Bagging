@@ -26,9 +26,12 @@ class Network:
             self.weights.append(self.generate_weights(self.hidden_neurons))
         self.weights.append(self.generate_weights(self.outs))
 
-    def feed_forward(self):
-        data = self.data[self.data_iter]
-        self.data_iter += 1
+    def feed_forward(self, train=True, test_data=None):
+        if train:
+            data = self.data[self.data_iter]
+            self.data_iter += 1
+        else:
+            data = test_data
         results = []
         for i in range(len(self.weights)):
             prom_results = []
@@ -36,17 +39,18 @@ class Network:
                 if i == 0:
                     prom_results.append(self.activate(data[j] * self.weights[i][j]))
                 else:
-                    neuron_mean = sum(results[i - 1]) * self.weights[i][j]
+                    neuron_mean = sum(results[i-1]) * self.weights[i][j]
                     prom_results.append(self.activate(neuron_mean))
             results.append(prom_results.copy())
-        self.back_propagation(results, data[-2:])
+        if train:
+            self.back_propagation(results, data[-2:])
+        else:
+            return results[-1:], data[-2:]
 
     def back_propagation(self, results, reference):
-        learning_rate = 0.5
+        learning_rate = 0.005
         error = reference[0] - results[self.hidden + 1][0] + reference[1] - results[self.hidden][1]
         correction = error / (results[self.hidden + 1][0] + results[self.hidden][1])
-        print(error)
-        print(reference[0], results[self.hidden + 1][0], reference[1], results[self.hidden][1])
         for i in range(len(self.weights) - 1, - 1, -1):
             for j in range(len(self.weights[i])):
                 self.weights[i][j] = self.weights[i][j] + (1 - results[i][j]) * learning_rate * correction
