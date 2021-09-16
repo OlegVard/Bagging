@@ -39,7 +39,7 @@ def prepare_data_for_com(k, divided_data):
     return data_for_com
 
 
-def loss(data, networks):
+def loss_for_all(data, networks):
     all_accuracy = []
     for network in networks:
         accuracy_of_net = []
@@ -54,10 +54,21 @@ def loss(data, networks):
     return all_accuracy
 
 
-def train(networks, len_learn):
-    for network in networks:
-        for i in range(len_learn):
-            network.feed_forward(train=True)
+def loss_for_one(network, data):
+    accuracy_of_net = []
+    for i in range(len(data)):
+        result, ref = network.feed_forward(test_data=data[i], train=False)
+        if ref[0] - result[0][0] < 0.3 and ref[1] - result[0][1] < 0.3:
+            accuracy_of_net.append(1)
+        else:
+            accuracy_of_net.append(0)
+    accuracy = sum(accuracy_of_net) * 100 / len(data)
+    return accuracy
+
+
+def train(network, len_learn):
+    for i in range(len_learn):
+        network.feed_forward(train=True)
 
 
 def start():
@@ -65,15 +76,23 @@ def start():
     data_train, data_test = load_data()
     data_train = broadcast_data(data_train, size_of_com)
     networks = []
+    i = 0
+    wrong_nets = 0
 
-    for i in range(size_of_com):
-        networks.append(Network(8, 2, 5, 2, data_train[i]))
-
-    train(networks, len(data_train[0]))
-    accuracy = loss(data_test, networks)
+    while len(networks) != size_of_com:
+        network = Network(8, 2, 5, 2, data_train[i])
+        train(network, len(data_train[0])-1)
+        accuracy = loss_for_one(network, data_test)
+        if accuracy > 50.0:
+            networks.append(network)
+            i += 1
+        else:
+            wrong_nets += 1
+    accuracy = loss_for_all(data_test, networks)
     common_accuracy = sum(accuracy) / len(accuracy)
     print('Точность каждой сети =', accuracy)
     print('Точность коммитета =', common_accuracy)
+    print('Отброшенных сетей', wrong_nets)
 
 
 if __name__ == '__main__':

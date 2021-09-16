@@ -48,7 +48,7 @@ class Network:
             return results[-1:], data[-2:]
 
     def back_propagation(self, results, reference):
-        learning_rate = 0.005
+        learning_rate = 0.01
         error = reference[0] - results[self.hidden + 1][0] + reference[1] - results[self.hidden][1]
         correction = error / (results[self.hidden + 1][0] + results[self.hidden][1])
         for i in range(len(self.weights) - 1, - 1, -1):
